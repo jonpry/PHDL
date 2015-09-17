@@ -1,0 +1,63 @@
+
+struct jtag_in_type {
+    tdi,tck,tms : wire
+};
+
+struct jtag_out_type {
+    tdo : wire
+};
+
+struct hdmi_parallel_type {
+    clk, vs, hd : wire,
+    dat : wire[24]
+};
+
+
+component xc3s500e : port {
+         jtag_in : in jtag_in_type,
+         jtag_out : out jtag_out_type,
+         hdmi_in : in hdmi_parallel_type,
+         clk_200 : in wire,
+	 gnd,vccio,vccint : in power
+} pin {
+         jtag_in.tms = "L3",
+         jtag_in.tck = "L2",
+         jtag_in.tdi = "L1",
+         jtag_out.tms = "L4",
+         hdmi_in.clk = "A1",
+         hdmi_in.vs = "A2",
+         hdmi_in.hs = "A3",
+         hdmi_in.dat[0] = "A4",
+         hdmi_in.dat[1] = "A5",
+         gnd = "A6,A7,A8"
+} footprint { fbga256() };
+
+component smd_capacitor : generic { size : string := "", value : string := "" }
+port {
+         a,b : inout power
+} pin { a = "1", b = "2" }
+footprint { smd(size,"C") }
+symbol { capacitor };
+
+module top {
+
+	jtag_in : jtag_in_type;
+	jtag_out : jtag_out_type;
+	hdmi : hdmi_parallel_type;
+	gnd, vccio, vccint : power;
+	clk : wire;
+
+	fpga_inst : component xc3s500e port(jtag_in,jtag_out,hdmi,clk,gnd,vccio,vccint);
+
+	vccio_caps : generate {
+    		for i in 0 to 7 {
+       			cap_inst : component smd_capactitor generic ("0402", "100nf") port(gnd,vccio);
+    		}
+	}
+
+	vccint_caps : generate {
+    		for i in 0 to 7 {
+        		cap_inst : component smd_capacitor generic ("0402", "100nf") port(gnd,vccio);
+    		}
+	}
+};	
