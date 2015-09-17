@@ -43,12 +43,17 @@ def p_function_stmt_list(p):
         p[0].append(p[2])
 
 def p_function_stmt(p):
-   '''function_stmt : return_stmt'''
+   '''function_stmt : return_stmt
+      | assgn_stmt'''
    p[0] = p[1]
 
 def p_return_stmt(p):
     '''return_stmt : RETURN expr SEMICOLON'''
     p[0] = (p[1], p[2])
+
+def p_assgn_stmt_def(p):
+    '''assgn_stmt : ID EQUALS expr SEMICOLON'''
+    p[0] = ('assignment', p[3], p[1])
 
 def p_constant_def(p):
     '''constant_def : CONSTANT ID COLON type COLON EQUALS expr'''
@@ -201,12 +206,29 @@ def p_expr_list_def(p):
         p[0] = p[1]
         p[0].append(p[3])
 
+precedence = ( ('left','PLUS','MINUS'), ('left','TIMES','DIVIDE'), ('right','UMINUS') )
+
+def p_expression_uminus(p): #TODO: pretty sure this does not work
+    "expr : MINUS expr %prec UMINUS"
+    p[0] = -p[2]
+
+def p_expr_paren(p):
+    '''expr : LPAREN expr RPAREN'''
+    p[0] = (p[1],p[2],p[2])
+
 def p_expr_def(p):
     '''expr : NUMBER
        | STRING
        | ID 
-       | function_call'''
-    p[0] = p[1]
+       | function_call
+       | expr TIMES expr
+       | expr PLUS expr
+       | expr MINUS expr
+       | expr DIVIDE expr'''
+    if len(p) > 2:
+      p[0] = (p[2],p[1],p[3])
+    else:  
+      p[0] = p[1]
 
 def p_decl_generic_def(p):
     '''decl_generic : GENERIC LBRACE decl_generic_list RBRACE'''

@@ -41,7 +41,6 @@ tokens = [
    'RBRACE',
    'LBRACKET',
    'RBRACKET',
-   'QUOTE',
    'STRING',
 ] + list(reserved.values());
 
@@ -61,7 +60,6 @@ t_SEMICOLON = r';'
 t_COMMA   = r','
 t_LBRACE  = r'\{'
 t_RBRACE  = r'\}'
-t_QUOTE   = r'\"'
 
 def t_STRING(t):
     r'\"[a-zA-Z0-9_,]*\"'

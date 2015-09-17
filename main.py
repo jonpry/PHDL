@@ -47,6 +47,10 @@ def resolve_function(name, args,context):
     e = resolve_expr(s[1],context)
     if s[0] == 'return':
       return e
+    elif s[0] == 'assignment':
+      context[s[2]] = e
+    else:
+      raise Exception("Unknown statements")
 
 def is_number(s): 
   try:
@@ -75,7 +79,16 @@ def resolve_expr(expr,context):
     for e in expr[2]:
       args.append(resolve_expr(e,context))
     return resolve_function(expr[1],args,deepcopy(context))
-  print expr
+  if expr[0] == "*":
+    return resolve_expr(expr[1],context) * resolve_expr(expr[2],context)    
+  if expr[0] == "/":
+    return resolve_expr(expr[1],context) / resolve_expr(expr[2],context)    
+  if expr[0] == "+":
+    return resolve_expr(expr[1],context) + resolve_expr(expr[2],context)    
+  if expr[0] == "-":
+    return resolve_expr(expr[1],context) - resolve_expr(expr[2],context)    
+  if expr[0] == "(":
+    return resolve_expr(expr[1],context)    
 
 native_types = ['int','float', 'bool', 'string' ] 
 def is_native_type(t):
@@ -106,6 +119,7 @@ if any_union([structs,components,modules,constants,functions]):
   raise Exception("constants structs module and components cannot share names")
 
 #first order of business is to collapse any constants
+context = {}
 for c in constants:
   data = constants[c]
   if data[0][1] != 1:
@@ -114,8 +128,9 @@ for c in constants:
      raise Exception("Only native type constants are supported")
 
   v = resolve_expr(data[1],{})
-  print v
-
+  context[c] = v
+ 
+print context
 #print str(functions)
 #print str(structs) + str(modules) + str(components) + str(constants) + str(functions)
 
