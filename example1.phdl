@@ -1,4 +1,6 @@
 
+constant dx : int := 5;
+
 struct jtag_in_type {
     tdi,tck,tms : wire
 };
@@ -17,7 +19,7 @@ component xc3s500e : port {
          jtag_in : in jtag_in_type,
          jtag_out : out jtag_out_type,
          hdmi_in : in hdmi_parallel_type,
-         clk_200 : in wire,
+         clk_200 : in wire[2],
 	 gnd,vccio,vccint : in power
 } pin {
          jtag_in.tms = "L3",

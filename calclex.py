@@ -17,7 +17,8 @@ reserved = {
    'id' : 'ID',
    'generic' : 'GENERIC',
    'for' : 'FOR',
-   'to' : 'TO'
+   'to' : 'TO',
+   'constant' : 'CONSTANT'
 }
 
 # List of token names.   This is always required
