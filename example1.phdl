@@ -21,7 +21,7 @@ struct jtag_out_type {
 };
 
 struct hdmi_parallel_type {
-    clk, vs, hd : wire,
+    clk, vs, hs : wire,
     dat : wire[24]
 };
 
@@ -30,7 +30,7 @@ component xc3s500e : port {
          jtag_in : in jtag_in_type,
          jtag_out : out jtag_out_type,
          hdmi_in : in hdmi_parallel_type,
-         clk_200 : in wire[2],
+         clk_200 : in wire[1],
 	 gnd,vccio,vccint : in power
 } pin {
          jtag_in.tms = "L3",
@@ -45,6 +45,24 @@ component xc3s500e : port {
          gnd = "A6,A7,A8"
 } footprint { fbga256() };
 
+component adv7611 : port {
+         hdmi_out : out hdmi_parallel_type,
+         clk_200 : in wire[1],
+	 gnd,vcc : in power
+} pin {
+         jtag_in.tms = "L3",
+         jtag_in.tck = "L2",
+         jtag_in.tdi = "L1",
+         jtag_out.tms = "L4",
+         hdmi_in.clk = "A1",
+         hdmi_in.vs = "A2",
+         hdmi_in.hs = "A3",
+         hdmi_in.dat[0] = "A4",
+         hdmi_in.dat[1] = "A5",
+         gnd = "A6,A7,A8"
+} footprint { fbga256() };
+
+
 component smd_capacitor : generic { size : string := "", value : string := "" }
 port {
          a,b : inout power
@@ -52,19 +70,30 @@ port {
 footprint { smd(size,"C") }
 symbol { capacitor };
 
-module top {
+module top : generic { foo : string := "var" } {
 
 	jtag_in : jtag_in_type;
 	jtag_out : jtag_out_type;
-	hdmi : hdmi_parallel_type;
+	hdmi : hdmi_parallel_type[2];
 	gnd, vccio, vccint : power;
 	clk : wire;
 
-	fpga_inst : component xc3s500e port(jtag_in,jtag_out,hdmi,clk,gnd,vccio,vccint);
+	fpga_inst : component xc3s500e port(jtag_in,jtag_out,hdmi[0],clk,gnd,vccio,vccint);
+        adv_inst : component adv7611 port(hdmi[1],hdmi[1].clk,gnd,vccint);
+
+        hdmi[1].vs = hdmi[0].vs;
+        hdmi[1].hs = hdmi[0].hs;
+        hdmi[1].clk = hdmi[0].dat[3];
+
+       hdmi_bs : generate {
+            	for i in 0 to 24 {
+			hdmi[0].dat[i] = hdmi[1].dat[23 - i];
+                }
+        } 
 
 	vccio_caps : generate {
     		for i in 0 to 7 {
-       			cap_inst : component smd_capactitor generic ("0402", "100nf") port(gnd,vccio);
+       			cap_inst : component smd_capacitor generic ("0402", "100nf") port(gnd,vccio);
     		}
 	}
 

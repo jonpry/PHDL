@@ -87,7 +87,7 @@ def p_id_list(p):
 
 def p_type_def(p):
     '''type : ID
-       | ID LBRACKET NUMBER RBRACKET'''
+       | ID LBRACKET expr RBRACKET'''
     if len(p) > 2:
       p[0] = (p[1], p[3])
     else:
@@ -134,8 +134,8 @@ def p_port_member(p):
     p[0] = (p[1],(p[3],p[4]))
 
 def p_module_def(p):
-    '''module_def : MODULE ID module_def_list'''
-    p[0] = (p[1],p[2],p[3])
+    '''module_def : MODULE ID COLON module_def_list'''
+    p[0] = (p[1],p[2],p[4])
 
 def p_module_def_list(p):
     '''module_def_list : module_def_elem
@@ -166,19 +166,28 @@ def p_pin_list_def(p):
         p[0].append(p[3])
 
 def p_pin_def(p):
-    '''pin : aderef EQUALS STRING'''
+    '''pin : deref EQUALS STRING'''
     p[0] = (p[1], p[3])
 
 def p_aderef_def(p):
-    '''aderef : deref
-       | deref LBRACKET NUMBER RBRACKET'''
+    '''aderef : ID
+       | ID LBRACKET expr RBRACKET'''
     p[0] = p[1]
     if len(p) > 2:
       p[0] = (p[1], p[3])
 
+def p_deref_list(p):
+    '''deref_list : deref
+       | deref_list COMMA deref'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
+
 def p_deref_def(p):
-    '''deref : ID
-       | deref PERIOD ID'''
+    '''deref : aderef
+       | deref PERIOD aderef'''
     if len(p) == 2:
         p[0] = [p[1]]
     else:
@@ -272,17 +281,22 @@ def p_instance_list_def(p):
 def p_instance_def(p):
      '''instance : signal_inst
         | component_inst
-        | generate_inst'''
+        | generate_inst
+        | assgn_inst'''
      p[0] = p[1]
 
 #these should not have id_list but causes shift reduce conflict so it will have to be enforced during symantics
 def p_component_inst_def(p):
      '''component_inst : id_list COLON COMPONENT ID component_args_list SEMICOLON'''
-     p[0] = (p[3],p[1][0],p[4],p[5])
+     p[0] = (p[3],p[1][0],(p[4],p[5]))
+
+def p_assgn_inst(p):
+     '''assgn_inst : deref EQUALS deref SEMICOLON'''
+     p[0] = (p[2], p[1], p[3])
 
 def p_generate_inst_def(p):
      '''generate_inst : id_list COLON GENERATE LBRACE gen_stmt_list RBRACE'''
-     p[0] = (p[1][0],p[3],p[5])
+     p[0] = (p[3],p[1][0],p[5])
 
 def p_gen_stmt_list_def(p):
      '''gen_stmt_list : gen_stmt
@@ -295,7 +309,8 @@ def p_gen_stmt_list_def(p):
 
 def p_gen_stmt_def(p):
      '''gen_stmt : for_inst
-        | component_inst'''
+        | component_inst
+        | assgn_inst'''
      p[0] = p[1]
 
 def p_for_inst(p):
@@ -317,7 +332,7 @@ def p_component_arg_def(p):
      p[0] = p[1]
 
 def p_use_port_def(p):
-     '''use_port : PORT LPAREN id_list RPAREN'''
+     '''use_port : PORT LPAREN deref_list RPAREN'''
      p[0] = (p[1], p[3])
 
 def p_use_generic_def(p):
