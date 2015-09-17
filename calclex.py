@@ -18,7 +18,9 @@ reserved = {
    'generic' : 'GENERIC',
    'for' : 'FOR',
    'to' : 'TO',
-   'constant' : 'CONSTANT'
+   'constant' : 'CONSTANT',
+   'function' : 'FUNCTION',
+   'return' : 'RETURN'
 }
 
 # List of token names.   This is always required

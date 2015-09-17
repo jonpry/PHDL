@@ -25,12 +25,34 @@ def p_stmt_block(p):
     '''stmt_block : struct_def SEMICOLON
        | component_def SEMICOLON 
        | module_def SEMICOLON
-       | constant_def SEMICOLON'''
+       | constant_def SEMICOLON
+       | function_def SEMICOLON'''
     p[0] = p[1]
+
+def p_function_def(p):
+    '''function_def : FUNCTION ID LPAREN id_list RPAREN LBRACE function_stmt_list RBRACE'''
+    p[0] = (p[1], p[2], (p[4], p[7]))
+
+def p_function_stmt_list(p):
+    '''function_stmt_list : function_stmt
+       | function_stmt_list function_stmt'''
+    if len(p) == 2:
+        p[0] = [p[1]]
+    else:
+        p[0] = p[1]
+        p[0].append(p[2])
+
+def p_function_stmt(p):
+   '''function_stmt : return_stmt'''
+   p[0] = p[1]
+
+def p_return_stmt(p):
+    '''return_stmt : RETURN expr SEMICOLON'''
+    p[0] = (p[1], p[2])
 
 def p_constant_def(p):
     '''constant_def : CONSTANT ID COLON type COLON EQUALS expr'''
-    p[0] = (p[1], p[2], p[4], p[7])
+    p[0] = (p[1], p[2], (p[4], p[7]))
 
 def p_struct_def(p):
     '''struct_def : STRUCT ID LBRACE struct_member_list RBRACE'''
@@ -158,10 +180,17 @@ def p_deref_def(p):
         p[0] = p[1]
         p[0].append(p[3])
 
+def p_function_call_def(p):
+    '''function_call : ID LPAREN expr_list RPAREN
+       | ID LPAREN RPAREN'''
+    if len(p) > 3:
+      p[0] = ('function_call', p[1], p[3])
+    else:
+      p[0] = ('function_call', p[1], None)
+
 def p_decl_footprint_def(p):
-    '''decl_footprint : FOOTPRINT LBRACE ID LPAREN expr_list RPAREN RBRACE
-       | FOOTPRINT LBRACE ID LPAREN RPAREN RBRACE'''
-    p[0] = ('funccall', p[3], p[5])
+    '''decl_footprint : FOOTPRINT LBRACE function_call RBRACE'''
+    p[0] = (p[1], p[3])
 
 def p_expr_list_def(p):
     '''expr_list : expr
@@ -175,7 +204,8 @@ def p_expr_list_def(p):
 def p_expr_def(p):
     '''expr : NUMBER
        | STRING
-       | ID '''
+       | ID 
+       | function_call'''
     p[0] = p[1]
 
 def p_decl_generic_def(p):

@@ -1,5 +1,15 @@
 
+function foo(x,y,z) {
+    return bar(y);
+};
+
+function bar(y) {
+    return 6;
+};
+
 constant dx : int := 5;
+
+constant dy : int := foo("6",3,"4");
 
 struct jtag_in_type {
     tdi,tck,tms : wire
