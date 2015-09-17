@@ -164,7 +164,7 @@ def evaluate_module(module,pname,port_args,gen_args,hierarchy):
     print port_args
     for p,m in zip(port_args,module['port']):
       print m
-      assign((pname,p),(iname,(m,module['port'][m][1])))
+      assign((pname,p),(iname,(m,module['port'][m][1])),var_context)
 
   if not 'body' in module:
     return 
@@ -204,29 +204,29 @@ def evaluate_module(module,pname,port_args,gen_args,hierarchy):
   module['body'] = filter(lambda t: t[0] != 'generate', module['body'])
 
   for c in filter(lambda t: t[0] == '=', module['body']):
-    assign((iname,c[1]),(iname,c[2]))
+    assign((iname,c[1]),(iname,c[2]),var_context)
   module['body'] = filter(lambda t: t[0] != '=', module['body'])
 
   if module['body']:
     raise Exception("unknown body elements")
   hierarchy.pop()
 
-def exists(instance,ref):
+def exists(instance,ref,context):
   found = None
   for s in signals:
-    print "######"
-    print s
-    print instance
-    print ref
+    #print "######"
+    #print s
+    #print instance
+    #print ref
     if len(ref) > 1:
       tup = (instance,ref[0],ref[1])
-      print tup
+      #print tup
       if tup == s:
-        print "found tup"
+        #print "found tup"
         return True
     if s[0] == instance and (s[1] == ref[0][0] or s[1] == ref[0]):
       found = {s[1]:s[2]}
-      print "found"
+      #print "found"
       break;
   if not found:
     return False
@@ -234,25 +234,38 @@ def exists(instance,ref):
   for e in ref:
     if not type(e) is tuple:
       e = (e,0)
-    print found
-    print e
+    #print found
+    #print e
     if not e[0] in found:
        print "not found: " + str(e[0])+ ", " + str(found)
        return False
-    if e[1] >= found[e[0]][1]:
-       print "too big " + str(e[1]) + ", " + str(found[e[0]][1])
+    v = resolve_expr(e[1],context)
+    if v >= found[e[0]][1]:
+       print "too big " + str(v) + ", " + str(found[e[0]][1])
        return False
     if not is_native_type(found[e[0]][0]):
-       found = structs[found[e[0]][0]]
+	       found = structs[found[e[0]][0]]
 	
   return True
 
-def assign(loc1, loc2):
-  print loc1
-  print loc2
-  if not exists(loc1[0],loc1[1]) or not exists(loc2[0],loc2[1]):
+def assign(loc1, loc2, context):
+  if not exists(loc1[0],loc1[1],context) or not exists(loc2[0],loc2[1],context):
     raise Exception("Variable reference does not exist") 
+
+  loc1 = resolve(loc1,context)
+  loc2 = resolve(loc2,context)
+
   assignments.append((loc1,loc2))
+
+def resolve(loc,context):
+  ary = []
+  for l in loc[1]:
+    print l
+    if type(l) is tuple:
+      ary.append((l[0],resolve_expr(l[1],context)))
+    else:
+      ary.append(l)
+  return (loc[0],ary)
 
 def evaluate_generate(stmts,var_context,sig_context,hierarchy,iname):
   for s in stmts:
@@ -273,7 +286,7 @@ def evaluate_generate(stmts,var_context,sig_context,hierarchy,iname):
       instance_common(modules[s[2][0]],var_context,sig_context,s[2][1],hierarchy,iname)
       hierarchy.pop()
     elif s[0] == '=':
-      print "" #s[1]
+      assign((iname,s[1]),(iname,s[2]),var_context)
     else:
       raise Exception("unknown generate")
 
@@ -373,10 +386,6 @@ for i in signals:
 print "Assignments:"
 for i in assignments:
   print i
-
-#print top_module
-#print str(functions)
-#print str(structs) + str(modules) + str(components) + str(constants) + str(functions)
 
 
 
