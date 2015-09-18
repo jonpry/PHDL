@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from yacc import parser;
+from netlist import expand;
 from copy import deepcopy;
 from collections import OrderedDict
 
@@ -160,11 +161,9 @@ def evaluate_module(module,pname,port_args,gen_args,hierarchy):
 
 
   if 'port' in module:
-    print module['port']
-    print port_args
     for p,m in zip(port_args,module['port']):
-      print m
-      assign((pname,p),(iname,(m,module['port'][m][1])),var_context)
+      #print "fooo: " + str(module['port'][m])
+      assign((pname,p),(iname,(m,)),var_context)
 
   if not 'body' in module:
     return 
@@ -213,6 +212,9 @@ def evaluate_module(module,pname,port_args,gen_args,hierarchy):
 
 def exists(instance,ref,context):
   found = None
+  #print instance
+  #print ref
+  #print context
   for s in signals:
     #print "######"
     #print s
@@ -222,7 +224,7 @@ def exists(instance,ref,context):
       tup = (instance,ref[0],ref[1])
       #print tup
       if tup == s:
-        #print "found tup"
+        print "found tup"
         return True
     if s[0] == instance and (s[1] == ref[0][0] or s[1] == ref[0]):
       found = {s[1]:s[2]}
@@ -260,7 +262,6 @@ def assign(loc1, loc2, context):
 def resolve(loc,context):
   ary = []
   for l in loc[1]:
-    print l
     if type(l) is tuple:
       ary.append((l[0],resolve_expr(l[1],context)))
     else:
@@ -371,22 +372,23 @@ signals = []
 assignments = []
 evaluate_module(top_module, [], {}, {}, [])
 
-print "Modules:"
-for i in filter(lambda k : k[0] in modules, instances):
-  print i
+#print "Modules:"
+#for i in filter(lambda k : k[0] in modules, instances):
+#  print i
 
-print "Components:"
-for i in filter(lambda k : k[0] in components, instances):
-  print i
+#print "Components:"
+#for i in filter(lambda k : k[0] in components, instances):
+#  print i
 
-print "Signals:"
-for i in signals:
-  print i
+#print "Signals:"
+#for i in signals:
+#  print i
 
-print "Assignments:"
-for i in assignments:
-  print i
+#print "Assignments:"
+#for i in assignments:
+#  print i
 
+expand(signals,assignments,structs)
 
 
 
